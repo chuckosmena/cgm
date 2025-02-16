@@ -10,7 +10,7 @@ const char *SERVER_API_URL = "https://www.coolgeeks.technology/api/machine/vouch
 const char *SERVER_API_KEY = "anOYwkrGolqM2RtLo8hJiQmXaQB75Qv751HRQKOjuRHbb0276bad809d73e4";
 
 // Coin Slot Settings
-#define COIN_PIN 14        // D5 -> Coin Slot Pulse Output
+#define COIN_PIN D5        // D5 -> Coin Slot Pulse Output
 #define VALID_PULSES 5     // 5 pulses = 1 valid 5-peso coin
 #define PULSE_TIMEOUT 500  // Max time between pulses (ms) before reset
 #define MIN_PULSE_INTERVAL 100 // Ignore pulses that come too fast (debounce)
