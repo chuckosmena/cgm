@@ -6,7 +6,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "Adafruit_Thermal.h"
-
+#include "MyLCD2004.h"
 
 // Define RX and TX for SoftwareSerial
 #define TX_PIN D7 // D7 -> Connected to printer RX
@@ -48,6 +48,11 @@ WiFiClientSecure client;
 SoftwareSerial mySerial(RX_PIN, TX_PIN);
 Adafruit_Thermal printer( & mySerial);
 
+// LCD
+//MyLCD2004 lcd(0x27, D3, D4); // Change 0x27 to your LCD address, D3/D4 to your SDA/SCL pins
+MyLCD2004 lcd;
+
+
 // Interrupt Service Routine (ISR) for Coin Insertion
 void IRAM_ATTR coinInserted() {
   unsigned long now = millis();
@@ -79,6 +84,7 @@ void IRAM_ATTR coinInserted() {
     }
     pulseCounter = 0; // Reset pulse counter for the next coin
     Serial.println("✅ 5 Peso Coin Inserted! Total: " + String(totalFivePesoCoins + newCoinsDuringAPI));
+    lcd.coinInsertedText();
 
     // Start/reset the reset timer
     resetTimerActive = true;
@@ -104,6 +110,7 @@ void wifiConnection() {
     WiFi.begin(WIFI_SSID, WIFI_PASS);
 
     Serial.println("🔄 Connecting to Wi-Fi...");
+    lcd.printCenter("Connecting... Wait!", 1);
     
     int retryCount = 0;
     while (WiFi.status() != WL_CONNECTED && retryCount < 20) { 
@@ -115,10 +122,12 @@ void wifiConnection() {
     }
 
     if (WiFi.status() == WL_CONNECTED) {
+        lcd.insertCoinText();
         Serial.println("\n✅ Connected! IP: " + WiFi.localIP().toString());
         digitalWrite(LED_BUILTIN, LOW);
         enableCoinSlot();
     } else {
+        lcd.printCenter("Wi-Fi Failed!", 1);
         Serial.println("\n❌ Wi-Fi Failed! Last status: " + String(WiFi.status()));
         disableCoinSlot();
     }
@@ -145,6 +154,7 @@ void checkWiFiReconnect() {
         if (wasDisconnected) {
             enableCoinSlot();
             Serial.println("✅ Reconnected! IP: " + WiFi.localIP().toString());
+            lcd.insertCoinText();
             wasDisconnected = false;
         }
     } else {
@@ -157,6 +167,7 @@ void checkWiFiReconnect() {
         // Try to reconnect every 10 seconds
         if (currentMillis - lastReconnectAttempt >= 10000) {
             Serial.println("🚨 Wi-Fi lost! Trying to reconnect...");
+            lcd.printCenter("Reconnecting...", 1);
 
             WiFi.mode(WIFI_STA);  // Ensure STA mode
             WiFi.disconnect();  // Reset connection
@@ -171,7 +182,8 @@ void checkWiFiReconnect() {
 
 // API Request Function
 void apiRequest(int quantity) {
-  if(WiFi.status() == WL_CONNECTED) {
+  if (WiFi.status() == WL_CONNECTED) {
+    lcd.printCenter("Buying Voucher", 1);
     Serial.println("Requesting to " + String(SERVER_API_URL) + String(quantity));
     client.setInsecure();
     http.begin(client, SERVER_API_URL + String(quantity));
@@ -228,7 +240,8 @@ void setPrinterFont(uint8_t fontType) {
 
 // Function to Print a Voucher
 void printVoucher(String code, String productName, String paidAt) {
-  Serial.println("🖨 Printing voucher: " + code);
+  Serial.println("🖨 Printing Voucher: " + code);
+  lcd.printCenter("Printing Voucher", 1);
 
   // Initialize printer and ensure settings are applied
   printer.wake(); // Ensure the printer is awake
@@ -281,12 +294,23 @@ void printVoucher(String code, String productName, String paidAt) {
   setPrinterFont(0);
   printer.println("================================\n\n");
   printer.feed(2);
+
+  // ✅ Estimate print time (3ms per character, adjust as needed)
+  String fullText = code + productName + paidAt;
+  int estimatedPrintTime = strlen(fullText.c_str()) * 3 + 3000;
+  delay(estimatedPrintTime);
+
+  lcd.insertCoinText();
 }
 
 // Setup Function
 void setup() {
   Serial.begin(115200);
   mySerial.begin(9600);
+
+  // Initialize MyLCD
+  lcd.begin();
+  lcd.reset();
 
   // Initialize the printer
   printer.begin();
