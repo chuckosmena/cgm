@@ -36,9 +36,9 @@ const char * VERSION = "1.0.0";
 // const char * WIFI_SSID = "COOLGEEKS2025-2G";
 // const char * WIFI_PASS = "COOLGEEKS2025";
 const char * WIFI_SSID = "GeekX_5G";
-const char * WIFI_PASS = "12345678";
+const char * WIFI_PASS = "";
 const char * SERVER_API_URL = "https://www.coolgeeks.technology/api/machine/vouchers/buy/5/";
-const char * SERVER_API_KEY = "mb7noFfVqpZjPwfP0qn5IRAHqq0OMSjQPpg2axQvvNjE009124cb8a936e52";
+const char * SERVER_API_KEY = "API_KEY_HERE";
 
 // Set up HTTP client
 HTTPClient http;
@@ -141,6 +141,9 @@ void checkWiFiReconnect() {
     static unsigned long previousMillis = 0;
     static bool ledState = false;
 
+    // Serial.print("WiFi Status: ");
+    // Serial.println(WiFi.status());
+
     if (WiFi.status() == WL_CONNECTED) {
         unsigned long currentMillis = millis();
 
@@ -242,6 +245,7 @@ void setPrinterFont(uint8_t fontType) {
 void printVoucher(String code, String productName, String paidAt) {
   Serial.println("🖨 Printing Voucher: " + code);
   lcd.printCenter("Printing Voucher", 1);
+  lcd.printCenter(code.c_str(), 2);
 
   // Initialize printer and ensure settings are applied
   printer.wake(); // Ensure the printer is awake
@@ -301,6 +305,7 @@ void printVoucher(String code, String productName, String paidAt) {
   delay(estimatedPrintTime);
 
   lcd.insertCoinText();
+  lcd.clearRow(2);
 }
 
 // Setup Function
