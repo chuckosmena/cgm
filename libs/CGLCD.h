@@ -1,17 +1,20 @@
-#ifndef MYLCD2004_H
-#define MYLCD2004_H
+#ifndef CGLCD_H
+#define CGLCD_H
+
+#include "CGConfig.h"
 
 #include <Wire.h>
 #include <LiquidCrystal_PCF8574.h>
 
-class MyLCD2004 {
+class CGLCD {
 private:
     LiquidCrystal_PCF8574 lcd;
     int sda, scl;
+    uint8_t address;
 
 public:
     // Constructor with default values
-    MyLCD2004(uint8_t address = 0x27, int sdaPin = D2, int sclPin = D1) 
+    CGLCD(int sclPin = PIN_LCD_SCL, int sdaPin = PIN_LCD_SDA, uint8_t address = LCD_ADDRESS) 
         : lcd(address), sda(sdaPin), scl(sclPin) {}
 
     void begin() {
@@ -22,7 +25,7 @@ public:
     }
 
     void reset() {
-        Wire.beginTransmission(0x27);  // Replace lcd.getAddress() with actual I2C address
+        Wire.beginTransmission(address);
         Wire.write(0x01);  // Send a clear command
         Wire.endTransmission();
         
@@ -124,4 +127,4 @@ public:
     }
 };
 
-#endif
+#endif // CGLCD_H
